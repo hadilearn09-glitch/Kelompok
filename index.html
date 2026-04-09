@@ -1,0 +1,1851 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perpustakaan Nusantara</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        display: ['Playfair Display', 'serif'],
+                        body: ['DM Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --bg: #0F1A14;
+            --bg-secondary: #162119;
+            --card: #1C2B22;
+            --card-hover: #243529;
+            --border: #2E4A38;
+            --fg: #E8F0EB;
+            --fg-muted: #8FA898;
+            --accent: #D4A843;
+            --accent-hover: #E0B94F;
+            --accent-dim: rgba(212, 168, 67, 0.12);
+            --success: #4ADE80;
+            --danger: #F87171;
+            --warning: #FBBF24;
+            --info: #60A5FA;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar kustom */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+        /* Latar belakang atmosferik */
+        .bg-atmosphere {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 600px 400px at 10% 20%, rgba(212,168,67,0.06) 0%, transparent 70%),
+                radial-gradient(ellipse 500px 500px at 90% 80%, rgba(46,74,56,0.15) 0%, transparent 70%),
+                radial-gradient(ellipse 300px 300px at 50% 50%, rgba(212,168,67,0.03) 0%, transparent 70%);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 270px;
+            min-height: 100vh;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            position: fixed; left: 0; top: 0; z-index: 40;
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar.collapsed { transform: translateX(-270px); }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 12px 20px; margin: 4px 12px;
+            border-radius: 10px; cursor: pointer;
+            color: var(--fg-muted);
+            transition: all 0.2s ease;
+            font-weight: 500; font-size: 14px;
+        }
+        .nav-item:hover { background: var(--card); color: var(--fg); }
+        .nav-item.active {
+            background: var(--accent-dim);
+            color: var(--accent);
+            font-weight: 600;
+        }
+        .nav-item.active i { color: var(--accent); }
+        .nav-item i { width: 20px; text-align: center; font-size: 15px; }
+
+        /* Konten utama */
+        .main-content {
+            margin-left: 270px;
+            min-height: 100vh;
+            position: relative; z-index: 1;
+            transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .main-content.expanded { margin-left: 0; }
+
+        /* Kartu */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            transition: all 0.25s ease;
+        }
+        .card:hover { border-color: rgba(212,168,67,0.25); }
+
+        /* Stat card */
+        .stat-card {
+            position: relative; overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute; top: -20px; right: -20px;
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            opacity: 0.08;
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover::before { transform: scale(1.5); }
+        .stat-card.gold::before { background: var(--accent); }
+        .stat-card.green::before { background: var(--success); }
+        .stat-card.red::before { background: var(--danger); }
+        .stat-card.blue::before { background: var(--info); }
+
+        /* Tombol */
+        .btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 20px; border-radius: 10px;
+            font-weight: 600; font-size: 13px;
+            cursor: pointer; border: none;
+            transition: all 0.2s ease;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .btn-primary {
+            background: var(--accent); color: #0F1A14;
+        }
+        .btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(212,168,67,0.3); }
+        .btn-secondary {
+            background: var(--card); color: var(--fg); border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { background: var(--card-hover); border-color: var(--fg-muted); }
+        .btn-danger { background: rgba(248,113,113,0.15); color: var(--danger); }
+        .btn-danger:hover { background: rgba(248,113,113,0.25); }
+        .btn-success { background: rgba(74,222,128,0.15); color: var(--success); }
+        .btn-success:hover { background: rgba(74,222,128,0.25); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: 8px; }
+
+        /* Input */
+        .input-field {
+            width: 100%; padding: 10px 14px;
+            background: var(--bg); border: 1px solid var(--border);
+            border-radius: 10px; color: var(--fg);
+            font-family: 'DM Sans', sans-serif; font-size: 14px;
+            transition: all 0.2s ease; outline: none;
+        }
+        .input-field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-dim); }
+        .input-field::placeholder { color: var(--fg-muted); opacity: 0.6; }
+        select.input-field { cursor: pointer; }
+        select.input-field option { background: var(--card); color: var(--fg); }
+
+        /* Tabel */
+        .data-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+        .data-table th {
+            padding: 12px 16px; text-align: left;
+            font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.08em;
+            color: var(--fg-muted); border-bottom: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+        .data-table td {
+            padding: 14px 16px; font-size: 13px;
+            border-bottom: 1px solid rgba(46,74,56,0.4);
+            vertical-align: middle;
+        }
+        .data-table tbody tr { transition: background 0.15s ease; }
+        .data-table tbody tr:hover { background: var(--card-hover); }
+
+        /* Badge */
+        .badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 600;
+        }
+        .badge-success { background: rgba(74,222,128,0.12); color: var(--success); }
+        .badge-danger { background: rgba(248,113,113,0.12); color: var(--danger); }
+        .badge-warning { background: rgba(251,191,36,0.12); color: var(--warning); }
+        .badge-info { background: rgba(96,165,250,0.12); color: var(--info); }
+        .badge-gold { background: var(--accent-dim); color: var(--accent); }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; inset: 0; z-index: 100;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        .modal-overlay.show { opacity: 1; pointer-events: all; }
+        .modal-box {
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 28px;
+            width: 90%; max-width: 520px; max-height: 85vh; overflow-y: auto;
+            transform: translateY(20px) scale(0.97);
+            transition: transform 0.25s ease;
+        }
+        .modal-overlay.show .modal-box { transform: translateY(0) scale(1); }
+
+        /* Toast */
+        .toast-container {
+            position: fixed; top: 20px; right: 20px; z-index: 200;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .toast {
+            padding: 14px 20px; border-radius: 12px;
+            font-size: 13px; font-weight: 500;
+            display: flex; align-items: center; gap: 10px;
+            animation: toastIn 0.35s ease forwards;
+            min-width: 280px; box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+        }
+        .toast.success { background: #1a3326; border: 1px solid rgba(74,222,128,0.3); color: var(--success); }
+        .toast.error { background: #331a1a; border: 1px solid rgba(248,113,113,0.3); color: var(--danger); }
+        .toast.warning { background: #33291a; border: 1px solid rgba(251,191,36,0.3); color: var(--warning); }
+        .toast.info { background: #1a2633; border: 1px solid rgba(96,165,250,0.3); color: var(--info); }
+        .toast.removing { animation: toastOut 0.3s ease forwards; }
+
+        @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes toastOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(40px); } }
+
+        /* Halaman */
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Kategori label */
+        .cat-dot {
+            width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px;
+        }
+
+        /* Floating particles */
+        .particle {
+            position: fixed; pointer-events: none; z-index: 0;
+            border-radius: 50%; opacity: 0.15;
+            animation: floatParticle linear infinite;
+        }
+        @keyframes floatParticle {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.15; }
+            90% { opacity: 0.15; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* Mobile toggle */
+        .mobile-toggle {
+            display: none; position: fixed; top: 16px; left: 16px; z-index: 50;
+            width: 42px; height: 42px; border-radius: 10px;
+            background: var(--card); border: 1px solid var(--border);
+            color: var(--fg); cursor: pointer;
+            align-items: center; justify-content: center; font-size: 18px;
+        }
+
+        /* Animasi angka */
+        .count-up { transition: all 0.5s ease; }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center; padding: 60px 20px; color: var(--fg-muted);
+        }
+        .empty-state i { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+
+        /* Responsif */
+        @media (max-width: 1024px) {
+            .sidebar { transform: translateX(-270px); }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0 !important; }
+            .mobile-toggle { display: flex; }
+        }
+
+        /* Label */
+        .label {
+            display: block; font-size: 12px; font-weight: 600;
+            color: var(--fg-muted); margin-bottom: 6px;
+            text-transform: uppercase; letter-spacing: 0.05em;
+        }
+
+        /* Cover buku placeholder */
+        .book-cover {
+            width: 40px; height: 56px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Partikel latar belakang -->
+<div class="bg-atmosphere"></div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Tombol toggle mobile -->
+<button class="mobile-toggle" id="mobileToggle" aria-label="Toggle menu">
+    <i class="fas fa-bars"></i>
+</button>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+    <div style="padding: 28px 24px 20px;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 42px; height: 42px; border-radius: 12px; background: var(--accent-dim); display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-book-open" style="color: var(--accent); font-size: 18px;"></i>
+            </div>
+            <div>
+                <h1 class="font-display" style="font-size: 18px; font-weight: 700; color: var(--fg); line-height: 1.1;">Nusantara</h1>
+                <span style="font-size: 11px; color: var(--fg-muted); font-weight: 500;">Perpustakaan Digital</span>
+            </div>
+        </div>
+    </div>
+
+    <div style="padding: 0 0 12px; border-bottom: 1px solid var(--border); margin: 0 12px;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--fg-muted); padding: 0 20px;">Menu Utama</span>
+    </div>
+
+    <nav style="padding: 8px 0;">
+        <div class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+            <i class="fas fa-chart-pie"></i> Dashboard
+        </div>
+        <div class="nav-item" data-page="books" onclick="navigateTo('books')">
+            <i class="fas fa-books"></i> Katalog Buku
+        </div>
+        <div class="nav-item" data-page="members" onclick="navigateTo('members')">
+            <i class="fas fa-users"></i> Anggota
+        </div>
+        <div class="nav-item" data-page="borrow" onclick="navigateTo('borrow')">
+            <i class="fas fa-hand-holding"></i> Peminjaman
+        </div>
+        <div class="nav-item" data-page="returns" onclick="navigateTo('returns')">
+            <i class="fas fa-rotate-left"></i> Pengembalian
+        </div>
+    </nav>
+
+    <div style="padding: 12px 0 12px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 0 12px;">
+        <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--fg-muted); padding: 0 20px;">Lainnya</span>
+    </div>
+    <nav style="padding: 8px 0;">
+        <div class="nav-item" data-page="reports" onclick="navigateTo('reports')">
+            <i class="fas fa-file-lines"></i> Laporan
+        </div>
+    </nav>
+
+    <!-- Info di bawah sidebar -->
+    <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 24px; border-top: 1px solid var(--border);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #8B6914); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #0F1A14;">A</div>
+            <div>
+                <div style="font-size: 13px; font-weight: 600;">Admin Pustaka</div>
+                <div style="font-size: 11px; color: var(--fg-muted);">admin@nusantara.id</div>
+            </div>
+        </div>
+    </div>
+</aside>
+
+<!-- Konten Utama -->
+<main class="main-content" id="mainContent">
+    <div style="padding: 28px 32px 40px;">
+
+        <!-- Header halaman -->
+        <header style="margin-bottom: 28px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;">
+                <div>
+                    <h2 class="font-display" id="pageTitle" style="font-size: 28px; font-weight: 700;">Dashboard</h2>
+                    <p id="pageSubtitle" style="font-size: 14px; color: var(--fg-muted); margin-top: 4px;">Ringkasan data perpustakaan</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="position: relative;">
+                        <input type="text" class="input-field" id="globalSearch" placeholder="Cari di seluruh perpustakaan..." style="width: 280px; padding-left: 38px; font-size: 13px;" oninput="handleGlobalSearch(this.value)">
+                        <i class="fas fa-search" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--fg-muted); font-size: 13px;"></i>
+                    </div>
+                    <div style="font-size: 13px; color: var(--fg-muted);" id="currentDate"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ===================== DASHBOARD ===================== -->
+        <div class="page active" id="page-dashboard">
+            <!-- Stat cards -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 28px;">
+                <div class="card stat-card gold">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="font-size: 12px; color: var(--fg-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Total Buku</span>
+                        <div style="width: 36px; height: 36px; border-radius: 10px; background: var(--accent-dim); display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-book" style="color: var(--accent); font-size: 14px;"></i>
+                        </div>
+                    </div>
+                    <div class="font-display" style="font-size: 32px; font-weight: 900;" id="statBooks">0</div>
+                    <span style="font-size: 11px; color: var(--fg-muted);">judul terdaftar</span>
+                </div>
+                <div class="card stat-card green">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="font-size: 12px; color: var(--fg-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Anggota</span>
+                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(74,222,128,0.1); display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-users" style="color: var(--success); font-size: 14px;"></i>
+                        </div>
+                    </div>
+                    <div class="font-display" style="font-size: 32px; font-weight: 900;" id="statMembers">0</div>
+                    <span style="font-size: 11px; color: var(--fg-muted);">anggota aktif</span>
+                </div>
+                <div class="card stat-card blue">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="font-size: 12px; color: var(--fg-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Dipinjam</span>
+                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(96,165,250,0.1); display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-hand-holding" style="color: var(--info); font-size: 14px;"></i>
+                        </div>
+                    </div>
+                    <div class="font-display" style="font-size: 32px; font-weight: 900;" id="statBorrowed">0</div>
+                    <span style="font-size: 11px; color: var(--fg-muted);">buku sedang dipinjam</span>
+                </div>
+                <div class="card stat-card red">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                        <span style="font-size: 12px; color: var(--fg-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Terlambat</span>
+                        <div style="width: 36px; height: 36px; border-radius: 10px; background: rgba(248,113,113,0.1); display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-clock" style="color: var(--danger); font-size: 14px;"></i>
+                        </div>
+                    </div>
+                    <div class="font-display" style="font-size: 32px; font-weight: 900;" id="statOverdue">0</div>
+                    <span style="font-size: 11px; color: var(--fg-muted);">pengembalian terlambat</span>
+                </div>
+            </div>
+
+            <!-- Chart & Aktivitas -->
+            <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-bottom: 28px;">
+                <div class="card">
+                    <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 20px;">Tren Peminjaman 6 Bulan Terakhir</h3>
+                    <canvas id="chartBorrowTrend" height="200"></canvas>
+                </div>
+                <div class="card">
+                    <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 20px;">Kategori Buku</h3>
+                    <canvas id="chartCategories" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Buku terbaru & peminjaman terbaru -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                <div class="card">
+                    <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 16px;">Buku Terbaru Ditambahkan</h3>
+                    <div id="recentBooks" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                </div>
+                <div class="card">
+                    <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 16px;">Peminjaman Terbaru</h3>
+                    <div id="recentBorrows" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== KATALOG BUKU ===================== -->
+        <div class="page" id="page-books">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                    <div style="position: relative;">
+                        <input type="text" class="input-field" id="searchBooks" placeholder="Cari buku..." style="width: 220px; padding-left: 36px; font-size: 13px;" oninput="renderBooks()">
+                        <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--fg-muted); font-size: 12px;"></i>
+                    </div>
+                    <select class="input-field" id="filterCategory" style="width: 160px; font-size: 13px;" onchange="renderBooks()">
+                        <option value="">Semua Kategori</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="openBookModal()">
+                    <i class="fas fa-plus"></i> Tambah Buku
+                </button>
+            </div>
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="booksTable">
+                        <thead>
+                            <tr>
+                                <th>Buku</th>
+                                <th>ISBN</th>
+                                <th>Kategori</th>
+                                <th>Stok</th>
+                                <th>Status</th>
+                                <th style="text-align: right;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="booksBody"></tbody>
+                    </table>
+                </div>
+                <div id="booksEmpty" class="empty-state" style="display: none;">
+                    <i class="fas fa-book-open"></i>
+                    <p style="font-size: 14px;">Belum ada buku terdaftar</p>
+                    <p style="font-size: 12px; margin-top: 4px;">Klik "Tambah Buku" untuk memulai</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== ANGGOTA ===================== -->
+        <div class="page" id="page-members">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                <div style="position: relative;">
+                    <input type="text" class="input-field" id="searchMembers" placeholder="Cari anggota..." style="width: 220px; padding-left: 36px; font-size: 13px;" oninput="renderMembers()">
+                    <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--fg-muted); font-size: 12px;"></i>
+                </div>
+                <button class="btn btn-primary" onclick="openMemberModal()">
+                    <i class="fas fa-user-plus"></i> Tambah Anggota
+                </button>
+            </div>
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Anggota</th>
+                                <th>ID Anggota</th>
+                                <th>Telepon</th>
+                                <th>Terdaftar</th>
+                                <th>Status</th>
+                                <th style="text-align: right;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="membersBody"></tbody>
+                    </table>
+                </div>
+                <div id="membersEmpty" class="empty-state" style="display: none;">
+                    <i class="fas fa-users"></i>
+                    <p style="font-size: 14px;">Belum ada anggota terdaftar</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== PEMINJAMAN ===================== -->
+        <div class="page" id="page-borrow">
+            <div class="card" style="margin-bottom: 20px;">
+                <h3 style="font-size: 16px; font-weight: 700; margin-bottom: 20px;">
+                    <i class="fas fa-hand-holding" style="color: var(--accent); margin-right: 8px;"></i>Form Peminjaman Baru
+                </h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div>
+                        <label class="label">Pilih Anggota</label>
+                        <select class="input-field" id="borrowMember">
+                            <option value="">-- Pilih Anggota --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label">Pilih Buku</label>
+                        <select class="input-field" id="borrowBook">
+                            <option value="">-- Pilih Buku --</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="label">Tanggal Pinjam</label>
+                        <input type="date" class="input-field" id="borrowDate">
+                    </div>
+                    <div>
+                        <label class="label">Jatuh Tempo (otomatis 14 hari)</label>
+                        <input type="date" class="input-field" id="borrowDue" readonly>
+                    </div>
+                </div>
+                <div style="margin-top: 18px; display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="processBorrow()">
+                        <i class="fas fa-check"></i> Proses Peminjaman
+                    </button>
+                </div>
+            </div>
+
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <div style="padding: 18px 24px; border-bottom: 1px solid var(--border);">
+                    <h3 style="font-size: 15px; font-weight: 700;">Daftar Peminjaman Aktif</h3>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Anggota</th>
+                                <th>Buku</th>
+                                <th>Tgl Pinjam</th>
+                                <th>Jatuh Tempo</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="borrowBody"></tbody>
+                    </table>
+                </div>
+                <div id="borrowEmpty" class="empty-state" style="display: none;">
+                    <i class="fas fa-inbox"></i>
+                    <p style="font-size: 14px;">Tidak ada peminjaman aktif</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== PENGEMBALIAN ===================== -->
+        <div class="page" id="page-returns">
+            <div class="card" style="padding: 0; overflow: hidden;">
+                <div style="padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+                    <h3 style="font-size: 15px; font-weight: 700;">Pengembalian Buku</h3>
+                    <div style="position: relative;">
+                        <input type="text" class="input-field" id="searchReturns" placeholder="Cari..." style="width: 200px; padding-left: 36px; font-size: 13px;" oninput="renderReturns()">
+                        <i class="fas fa-search" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--fg-muted); font-size: 12px;"></i>
+                    </div>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Anggota</th>
+                                <th>Buku</th>
+                                <th>Jatuh Tempo</th>
+                                <th>Telat</th>
+                                <th>Denda</th>
+                                <th style="text-align: center;">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="returnsBody"></tbody>
+                    </table>
+                </div>
+                <div id="returnsEmpty" class="empty-state" style="display: none;">
+                    <i class="fas fa-check-circle"></i>
+                    <p style="font-size: 14px;">Semua buku telah dikembalikan</p>
+                </div>
+            </div>
+
+            <!-- Riwayat pengembalian -->
+            <div class="card" style="margin-top: 20px; padding: 0; overflow: hidden;">
+                <div style="padding: 18px 24px; border-bottom: 1px solid var(--border);">
+                    <h3 style="font-size: 15px; font-weight: 700;">Riwayat Pengembalian</h3>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Anggota</th>
+                                <th>Buku</th>
+                                <th>Tgl Kembali</th>
+                                <th>Denda</th>
+                            </tr>
+                        </thead>
+                        <tbody id="returnHistoryBody"></tbody>
+                    </table>
+                </div>
+                <div id="returnHistoryEmpty" class="empty-state" style="display: none;">
+                    <i class="fas fa-history"></i>
+                    <p style="font-size: 14px;">Belum ada riwayat pengembalian</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================== LAPORAN ===================== -->
+        <div class="page" id="page-reports">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+                <div class="card" style="text-align: center;">
+                    <i class="fas fa-arrow-up-from-bracket" style="font-size: 28px; color: var(--info); margin-bottom: 12px;"></i>
+                    <div class="font-display" style="font-size: 28px; font-weight: 900;" id="reportTotalBorrows">0</div>
+                    <div style="font-size: 12px; color: var(--fg-muted);">Total Peminjaman</div>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <i class="fas fa-arrow-down-to-bracket" style="font-size: 28px; color: var(--success); margin-bottom: 12px;"></i>
+                    <div class="font-display" style="font-size: 28px; font-weight: 900;" id="reportTotalReturns">0</div>
+                    <div style="font-size: 12px; color: var(--fg-muted);">Total Pengembalian</div>
+                </div>
+                <div class="card" style="text-align: center;">
+                    <i class="fas fa-coins" style="font-size: 28px; color: var(--accent); margin-bottom: 12px;"></i>
+                    <div class="font-display" style="font-size: 28px; font-weight: 900;" id="reportTotalFines">Rp 0</div>
+                    <div style="font-size: 12px; color: var(--fg-muted);">Total Denda Terkumpul</div>
+                </div>
+            </div>
+
+            <div class="card" style="margin-bottom: 20px;">
+                <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 16px;">Buku Paling Banyak Dipinjam</h3>
+                <div id="topBooksList"></div>
+            </div>
+
+            <div class="card">
+                <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 16px;">Anggota Paling Aktif</h3>
+                <div id="topMembersList"></div>
+            </div>
+        </div>
+
+    </div>
+</main>
+
+<!-- ===================== MODAL BUKU ===================== -->
+<div class="modal-overlay" id="bookModal">
+    <div class="modal-box">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+            <h3 class="font-display" style="font-size: 20px; font-weight: 700;" id="bookModalTitle">Tambah Buku Baru</h3>
+            <button onclick="closeModal('bookModal')" style="background: none; border: none; color: var(--fg-muted); cursor: pointer; font-size: 18px; padding: 4px;"><i class="fas fa-xmark"></i></button>
+        </div>
+        <input type="hidden" id="bookEditId">
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div>
+                <label class="label">Judul Buku</label>
+                <input type="text" class="input-field" id="bookTitle" placeholder="Masukkan judul buku">
+            </div>
+            <div>
+                <label class="label">Pengarang</label>
+                <input type="text" class="input-field" id="bookAuthor" placeholder="Nama pengarang">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                    <label class="label">ISBN</label>
+                    <input type="text" class="input-field" id="bookISBN" placeholder="978-xxx-xxx">
+                </div>
+                <div>
+                    <label class="label">Penerbit</label>
+                    <input type="text" class="input-field" id="bookPublisher" placeholder="Nama penerbit">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                    <label class="label">Kategori</label>
+                    <select class="input-field" id="bookCategory">
+                        <option value="Fiksi">Fiksi</option>
+                        <option value="Non-Fiksi">Non-Fiksi</option>
+                        <option value="Sains">Sains</option>
+                        <option value="Teknologi">Teknologi</option>
+                        <option value="Sejarah">Sejarah</option>
+                        <option value="Sastra">Sastra</option>
+                        <option value="Agama">Agama</option>
+                        <option value="Pendidikan">Pendidikan</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="label">Jumlah Stok</label>
+                    <input type="number" class="input-field" id="bookStock" min="0" value="1" placeholder="0">
+                </div>
+            </div>
+            <div>
+                <label class="label">Tahun Terbit</label>
+                <input type="number" class="input-field" id="bookYear" min="1900" max="2025" placeholder="2024">
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px;">
+            <button class="btn btn-secondary" onclick="closeModal('bookModal')">Batal</button>
+            <button class="btn btn-primary" onclick="saveBook()">
+                <i class="fas fa-save"></i> Simpan
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL ANGGOTA ===================== -->
+<div class="modal-overlay" id="memberModal">
+    <div class="modal-box">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+            <h3 class="font-display" style="font-size: 20px; font-weight: 700;" id="memberModalTitle">Tambah Anggota Baru</h3>
+            <button onclick="closeModal('memberModal')" style="background: none; border: none; color: var(--fg-muted); cursor: pointer; font-size: 18px; padding: 4px;"><i class="fas fa-xmark"></i></button>
+        </div>
+        <input type="hidden" id="memberEditId">
+        <div style="display: flex; flex-direction: column; gap: 14px;">
+            <div>
+                <label class="label">Nama Lengkap</label>
+                <input type="text" class="input-field" id="memberName" placeholder="Nama lengkap anggota">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div>
+                    <label class="label">Email</label>
+                    <input type="email" class="input-field" id="memberEmail" placeholder="email@contoh.com">
+                </div>
+                <div>
+                    <label class="label">Telepon</label>
+                    <input type="text" class="input-field" id="memberPhone" placeholder="08xxxxxxxxxx">
+                </div>
+            </div>
+            <div>
+                <label class="label">Alamat</label>
+                <input type="text" class="input-field" id="memberAddress" placeholder="Alamat lengkap">
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px;">
+            <button class="btn btn-secondary" onclick="closeModal('memberModal')">Batal</button>
+            <button class="btn btn-primary" onclick="saveMember()">
+                <i class="fas fa-save"></i> Simpan
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== MODAL KONFIRMASI ===================== -->
+<div class="modal-overlay" id="confirmModal">
+    <div class="modal-box" style="max-width: 400px; text-align: center;">
+        <i class="fas fa-triangle-exclamation" style="font-size: 40px; color: var(--warning); margin-bottom: 16px;"></i>
+        <h3 style="font-size: 18px; font-weight: 700; margin-bottom: 8px;" id="confirmTitle">Konfirmasi</h3>
+        <p style="font-size: 14px; color: var(--fg-muted); margin-bottom: 24px;" id="confirmMsg">Apakah Anda yakin?</p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button class="btn btn-secondary" onclick="closeModal('confirmModal')">Batal</button>
+            <button class="btn btn-danger" id="confirmBtn" onclick="">
+                <i class="fas fa-trash"></i> Hapus
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// DATABASE (localStorage)
+// ============================================================
+const DB_KEYS = {
+    books: 'lib_books',
+    members: 'lib_members',
+    borrows: 'lib_borrows',
+    returns: 'lib_returns',
+    initialized: 'lib_initialized'
+};
+
+// Warna untuk setiap kategori buku
+const CATEGORY_COLORS = {
+    'Fiksi': '#D4A843',
+    'Non-Fiksi': '#4ADE80',
+    'Sains': '#60A5FA',
+    'Teknologi': '#A78BFA',
+    'Sejarah': '#F87171',
+    'Sastra': '#FB923C',
+    'Agama': '#34D399',
+    'Pendidikan': '#FBBF24'
+};
+
+// Data awal (seed)
+function getSeedData() {
+    const today = new Date();
+    const daysAgo = (n) => { const d = new Date(today); d.setDate(d.getDate() - n); return d.toISOString().split('T')[0]; };
+    const daysLater = (n) => { const d = new Date(today); d.setDate(d.getDate() + n); return d.toISOString().split('T')[0]; };
+
+    return {
+        books: [
+            { id: 'B001', title: 'Laskar Pelangi', author: 'Andrea Hirata', isbn: '978-979-1227-00-1', publisher: 'Bentang Pustaka', category: 'Sastra', stock: 5, availableStock: 3, year: 2005, createdAt: daysAgo(60) },
+            { id: 'B002', title: 'Bumi Manusia', author: 'Pramoedya Ananta Toer', isbn: '978-979-3062-00-8', publisher: 'Hasta Mitra', category: 'Sastra', stock: 4, availableStock: 2, year: 1980, createdAt: daysAgo(55) },
+            { id: 'B003', title: 'Sapiens: Riwayat Singkat Umat Manusia', author: 'Yuval Noah Harari', isbn: '978-0-06-231609-7', publisher: 'Harper', category: 'Sejarah', stock: 3, availableStock: 1, year: 2014, createdAt: daysAgo(50) },
+            { id: 'B004', title: 'Clean Code', author: 'Robert C. Martin', isbn: '978-0-13-235088-4', publisher: 'Prentice Hall', category: 'Teknologi', stock: 6, availableStock: 4, year: 2008, createdAt: daysAgo(45) },
+            { id: 'B005', title: 'A Brief History of Time', author: 'Stephen Hawking', isbn: '978-0-553-10953-5', publisher: 'Bantam', category: 'Sains', stock: 3, availableStock: 2, year: 1988, createdAt: daysAgo(40) },
+            { id: 'B006', title: 'Filosofi Teras', author: 'Henry Manampiring', isbn: '978-602-291-545-0', publisher: 'Penerbit Buku Kompas', category: 'Non-Fiksi', stock: 4, availableStock: 3, year: 2018, createdAt: daysAgo(35) },
+            { id: 'B007', title: 'Dilan 1990', author: 'Pidi Baiq', isbn: '978-602-291-355-5', publisher: 'Pastel Books', category: 'Fiksi', stock: 7, availableStock: 5, year: 2014, createdAt: daysAgo(30) },
+            { id: 'B008', title: 'The Pragmatic Programmer', author: 'David Thomas & Andrew Hunt', isbn: '978-0-13-595705-9', publisher: 'Addison-Wesley', category: 'Teknologi', stock: 3, availableStock: 2, year: 2019, createdAt: daysAgo(25) },
+            { id: 'B009', title: 'Sejarah Indonesia Modern', author: 'M.C. Ricklefs', isbn: '978-979-9023-44-0', publisher: 'Serambi Ilmu Semesta', category: 'Sejarah', stock: 2, availableStock: 2, year: 2005, createdAt: daysAgo(20) },
+            { id: 'B010', title: 'Laut Bercerita', author: 'Leila S. Chudori', isbn: '978-602-291-527-6', publisher: 'Kepustakaan Populer Gramedia', category: 'Fiksi', stock: 5, availableStock: 4, year: 2017, createdAt: daysAgo(15) },
+            { id: 'B011', title: 'Ayat-Ayat Cinta', author: 'Habiburrahman El Shirazy', isbn: '978-979-8846-04-3', publisher: 'Republika', category: 'Agama', stock: 4, availableStock: 3, year: 2004, createdAt: daysAgo(10) },
+            { id: 'B012', title: 'Pendidikan Karakter', author: 'Thomas Lickona', isbn: '978-979-1227-65-0', publisher: 'Bentang Pustaka', category: 'Pendidikan', stock: 3, availableStock: 3, year: 2012, createdAt: daysAgo(5) },
+        ],
+        members: [
+            { id: 'M001', name: 'Rina Setiawan', email: 'rina@email.com', phone: '081234567890', address: 'Jl. Merdeka No. 10, Jakarta', status: 'aktif', createdAt: daysAgo(90) },
+            { id: 'M002', name: 'Budi Santoso', email: 'budi@email.com', phone: '081298765432', address: 'Jl. Sudirman No. 25, Bandung', status: 'aktif', createdAt: daysAgo(80) },
+            { id: 'M003', name: 'Siti Nurhaliza', email: 'siti@email.com', phone: '085312345678', address: 'Jl. Diponegoro No. 5, Surabaya', status: 'aktif', createdAt: daysAgo(70) },
+            { id: 'M004', name: 'Ahmad Fauzi', email: 'ahmad@email.com', phone: '087654321098', address: 'Jl. Pahlawan No. 15, Yogyakarta', status: 'aktif', createdAt: daysAgo(60) },
+            { id: 'M005', name: 'Dewi Lestari', email: 'dewi@email.com', phone: '089876543210', address: 'Jl. Gatot Subroto No. 8, Semarang', status: 'nonaktif', createdAt: daysAgo(50) },
+            { id: 'M006', name: 'Rizky Pratama', email: 'rizky@email.com', phone: '082112345678', address: 'Jl. Ahmad Yani No. 30, Malang', status: 'aktif', createdAt: daysAgo(40) },
+        ],
+        borrows: [
+            { id: 'P001', memberId: 'M001', bookId: 'B001', borrowDate: daysAgo(20), dueDate: daysAgo(6), status: 'aktif', createdAt: daysAgo(20) },
+            { id: 'P002', memberId: 'M002', bookId: 'B003', borrowDate: daysAgo(18), dueDate: daysAgo(4), status: 'aktif', createdAt: daysAgo(18) },
+            { id: 'P003', memberId: 'M003', bookId: 'B004', borrowDate: daysAgo(15), dueDate: daysLater(-1), status: 'aktif', createdAt: daysAgo(15) },
+            { id: 'P004', memberId: 'M004', bookId: 'B002', borrowDate: daysAgo(10), dueDate: daysLater(4), status: 'aktif', createdAt: daysAgo(10) },
+            { id: 'P005', memberId: 'M001', bookId: 'B007', borrowDate: daysAgo(8), dueDate: daysLater(6), status: 'aktif', createdAt: daysAgo(8) },
+            { id: 'P006', memberId: 'M006', bookId: 'B005', borrowDate: daysAgo(5), dueDate: daysLater(9), status: 'aktif', createdAt: daysAgo(5) },
+            { id: 'P007', memberId: 'M002', bookId: 'B001', borrowDate: daysAgo(30), dueDate: daysAgo(16), status: 'dikembalikan', createdAt: daysAgo(30) },
+            { id: 'P008', memberId: 'M003', bookId: 'B010', borrowDate: daysAgo(25), dueDate: daysAgo(11), status: 'dikembalikan', createdAt: daysAgo(25) },
+        ],
+        returns: [
+            { borrowId: 'P007', memberId: 'M002', bookId: 'B001', returnDate: daysAgo(14), fine: 0, createdAt: daysAgo(14) },
+            { borrowId: 'P008', memberId: 'M003', bookId: 'B010', returnDate: daysAgo(10), fine: 0, createdAt: daysAgo(10) },
+        ]
+    };
+}
+
+// Inisialisasi database
+function initDB() {
+    if (!localStorage.getItem(DB_KEYS.initialized)) {
+        const seed = getSeedData();
+        localStorage.setItem(DB_KEYS.books, JSON.stringify(seed.books));
+        localStorage.setItem(DB_KEYS.members, JSON.stringify(seed.members));
+        localStorage.setItem(DB_KEYS.borrows, JSON.stringify(seed.borrows));
+        localStorage.setItem(DB_KEYS.returns, JSON.stringify(seed.returns));
+        localStorage.setItem(DB_KEYS.initialized, 'true');
+    }
+}
+
+function getDB(key) {
+    return JSON.parse(localStorage.getItem(key) || '[]');
+}
+function setDB(key, data) {
+    localStorage.setItem(key, JSON.stringify(data));
+}
+
+// ============================================================
+// UTILITAS
+// ============================================================
+function generateId(prefix) {
+    const items = getDB(DB_KEYS[prefix === 'B' ? 'books' : prefix === 'M' ? 'members' : 'borrows']);
+    let maxNum = 0;
+    items.forEach(item => {
+        const num = parseInt(item.id.replace(prefix, ''));
+        if (num > maxNum) maxNum = num;
+    });
+    return prefix + String(maxNum + 1).padStart(3, '0');
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function daysBetween(d1, d2) {
+    const a = new Date(d1); const b = new Date(d2);
+    return Math.ceil((b - a) / (1000 * 60 * 60 * 24));
+}
+
+function formatRupiah(num) {
+    return 'Rp ' + (num || 0).toLocaleString('id-ID');
+}
+
+// Toast notifikasi
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    const icons = { success: 'fa-check-circle', error: 'fa-xmark-circle', warning: 'fa-triangle-exclamation', info: 'fa-info-circle' };
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<i class="fas ${icons[type]}"></i> ${message}`;
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.add('removing');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Modal
+function openModal(id) {
+    document.getElementById(id).classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+function closeModal(id) {
+    document.getElementById(id).classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+// ============================================================
+// NAVIGASI
+// ============================================================
+let currentPage = 'dashboard';
+
+function navigateTo(page) {
+    currentPage = page;
+    // Sembunyikan semua halaman
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(`page-${page}`).classList.add('active');
+
+    // Update navigasi aktif
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelector(`.nav-item[data-page="${page}"]`).classList.add('active');
+
+    // Update judul
+    const titles = {
+        dashboard: ['Dashboard', 'Ringkasan data perpustakaan'],
+        books: ['Katalog Buku', 'Kelola koleksi buku perpustakaan'],
+        members: ['Anggota', 'Kelola data anggota perpustakaan'],
+        borrow: ['Peminjaman', 'Proses dan kelola peminjaman buku'],
+        returns: ['Pengembalian', 'Kelola pengembalian dan denda'],
+        reports: ['Laporan', 'Statistik dan laporan perpustakaan']
+    };
+    document.getElementById('pageTitle').textContent = titles[page][0];
+    document.getElementById('pageSubtitle').textContent = titles[page][1];
+
+    // Tutup sidebar di mobile
+    document.getElementById('sidebar').classList.remove('open');
+
+    // Render halaman
+    renderPage(page);
+}
+
+function renderPage(page) {
+    switch (page) {
+        case 'dashboard': renderDashboard(); break;
+        case 'books': renderBooks(); break;
+        case 'members': renderMembers(); break;
+        case 'borrow': renderBorrowPage(); break;
+        case 'returns': renderReturns(); break;
+        case 'reports': renderReports(); break;
+    }
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+let chartBorrowTrend = null;
+let chartCategories = null;
+
+function renderDashboard() {
+    const books = getDB(DB_KEYS.books);
+    const members = getDB(DB_KEYS.members);
+    const borrows = getDB(DB_KEYS.borrows).filter(b => b.status === 'aktif');
+    const today = new Date().toISOString().split('T')[0];
+
+    // Hitung terlambat
+    let overdue = 0;
+    borrows.forEach(b => { if (b.dueDate < today) overdue++; });
+
+    // Animasi angka
+    animateCount('statBooks', books.length);
+    animateCount('statMembers', members.filter(m => m.status === 'aktif').length);
+    animateCount('statBorrowed', borrows.length);
+    animateCount('statOverdue', overdue);
+
+    // Grafik tren peminjaman
+    renderBorrowTrendChart();
+    renderCategoryChart();
+
+    // Buku terbaru
+    const recentBooks = [...books].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+    const rbContainer = document.getElementById('recentBooks');
+    rbContainer.innerHTML = recentBooks.map(b => `
+        <div style="display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 10px; background: var(--bg-secondary);">
+            <div class="book-cover" style="background: ${CATEGORY_COLORS[b.category] || '#888'}22; color: ${CATEGORY_COLORS[b.category] || '#888'};">
+                <i class="fas fa-book"></i>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${b.title}</div>
+                <div style="font-size: 11px; color: var(--fg-muted);">${b.author}</div>
+            </div>
+            <span class="badge badge-gold" style="font-size: 10px;">${b.category}</span>
+        </div>
+    `).join('');
+
+    // Peminjaman terbaru
+    const allBorrows = getDB(DB_KEYS.borrows).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+    const rbContainer2 = document.getElementById('recentBorrows');
+    rbContainer2.innerHTML = allBorrows.map(b => {
+        const member = members.find(m => m.id === b.memberId);
+        const book = books.find(bk => bk.id === b.bookId);
+        const isOverdue = b.status === 'aktif' && b.dueDate < today;
+        return `
+        <div style="display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 10px; background: var(--bg-secondary);">
+            <div style="width: 36px; height: 36px; border-radius: 50%; background: ${isOverdue ? 'rgba(248,113,113,0.15)' : 'rgba(96,165,250,0.15)'}; display: flex; align-items: center; justify-content: center;">
+                <i class="fas ${isOverdue ? 'fa-clock' : 'fa-hand-holding'}" style="font-size: 13px; color: ${isOverdue ? 'var(--danger)' : 'var(--info)'};"></i>
+            </div>
+            <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${member ? member.name : '-'} meminjam "${book ? book.title : '-'}"</div>
+                <div style="font-size: 11px; color: var(--fg-muted);">${formatDate(b.borrowDate)}</div>
+            </div>
+            <span class="badge ${isOverdue ? 'badge-danger' : b.status === 'aktif' ? 'badge-info' : 'badge-success'}" style="font-size: 10px;">${isOverdue ? 'Terlambat' : b.status === 'aktif' ? 'Aktif' : 'Dikembalikan'}</span>
+        </div>
+        `;
+    }).join('');
+}
+
+function animateCount(id, target) {
+    const el = document.getElementById(id);
+    let current = 0;
+    const step = Math.max(1, Math.ceil(target / 30));
+    const interval = setInterval(() => {
+        current += step;
+        if (current >= target) { current = target; clearInterval(interval); }
+        el.textContent = current;
+    }, 25);
+}
+
+function renderBorrowTrendChart() {
+    const borrows = getDB(DB_KEYS.borrows);
+    const labels = [];
+    const data = [];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const today = new Date();
+
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+        const month = d.getMonth();
+        const year = d.getFullYear();
+        labels.push(monthNames[month]);
+        const count = borrows.filter(b => {
+            const bd = new Date(b.borrowDate);
+            return bd.getMonth() === month && bd.getFullYear() === year;
+        }).length;
+        data.push(count);
+    }
+
+    const ctx = document.getElementById('chartBorrowTrend').getContext('2d');
+    if (chartBorrowTrend) chartBorrowTrend.destroy();
+
+    chartBorrowTrend = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Peminjaman',
+                data,
+                borderColor: '#D4A843',
+                backgroundColor: 'rgba(212, 168, 67, 0.1)',
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#D4A843',
+                pointBorderColor: '#D4A843',
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#1C2B22',
+                    titleColor: '#E8F0EB',
+                    bodyColor: '#D4A843',
+                    borderColor: '#2E4A38',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    padding: 10
+                }
+            },
+            scales: {
+                x: { grid: { color: 'rgba(46,74,56,0.3)' }, ticks: { color: '#8FA898', font: { size: 11 } } },
+                y: { beginAtZero: true, grid: { color: 'rgba(46,74,56,0.3)' }, ticks: { color: '#8FA898', font: { size: 11 }, stepSize: 1 } }
+            }
+        }
+    });
+}
+
+function renderCategoryChart() {
+    const books = getDB(DB_KEYS.books);
+    const catCount = {};
+    books.forEach(b => { catCount[b.category] = (catCount[b.category] || 0) + 1; });
+
+    const labels = Object.keys(catCount);
+    const data = Object.values(catCount);
+    const colors = labels.map(l => CATEGORY_COLORS[l] || '#888888');
+
+    const ctx = document.getElementById('chartCategories').getContext('2d');
+    if (chartCategories) chartCategories.destroy();
+
+    chartCategories = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels,
+            datasets: [{
+                data,
+                backgroundColor: colors.map(c => c + '44'),
+                borderColor: colors,
+                borderWidth: 2,
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '60%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: '#8FA898', font: { size: 11 }, padding: 12, usePointStyle: true, pointStyleWidth: 8 }
+                },
+                tooltip: {
+                    backgroundColor: '#1C2B22',
+                    titleColor: '#E8F0EB',
+                    bodyColor: '#D4A843',
+                    borderColor: '#2E4A38',
+                    borderWidth: 1,
+                    cornerRadius: 8
+                }
+            }
+        }
+    });
+}
+
+// ============================================================
+// KATALOG BUKU
+// ============================================================
+function renderBooks() {
+    const books = getDB(DB_KEYS.books);
+    const search = (document.getElementById('searchBooks')?.value || '').toLowerCase();
+    const filterCat = document.getElementById('filterCategory')?.value || '';
+
+    // Isi dropdown kategori
+    const catSelect = document.getElementById('filterCategory');
+    const currentVal = catSelect.value;
+    const cats = [...new Set(books.map(b => b.category))].sort();
+    catSelect.innerHTML = '<option value="">Semua Kategori</option>' + cats.map(c => `<option value="${c}" ${c === currentVal ? 'selected' : ''}>${c}</option>`).join('');
+
+    // Filter
+    let filtered = books.filter(b => {
+        const matchSearch = !search || b.title.toLowerCase().includes(search) || b.author.toLowerCase().includes(search) || b.isbn.toLowerCase().includes(search);
+        const matchCat = !filterCat || b.category === filterCat;
+        return matchSearch && matchCat;
+    });
+
+    const tbody = document.getElementById('booksBody');
+    const empty = document.getElementById('booksEmpty');
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+    }
+    empty.style.display = 'none';
+
+    tbody.innerHTML = filtered.map(b => {
+        const color = CATEGORY_COLORS[b.category] || '#888';
+        const statusBadge = b.availableStock > 0
+            ? `<span class="badge badge-success"><i class="fas fa-circle" style="font-size: 6px;"></i> Tersedia</span>`
+            : `<span class="badge badge-danger"><i class="fas fa-circle" style="font-size: 6px;"></i> Habis</span>`;
+
+        return `
+        <tr>
+            <td>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="book-cover" style="background: ${color}22; color: ${color};">
+                        <i class="fas fa-book"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 13px;">${b.title}</div>
+                        <div style="font-size: 11px; color: var(--fg-muted);">${b.author} &middot; ${b.year}</div>
+                    </div>
+                </div>
+            </td>
+            <td style="font-size: 12px; color: var(--fg-muted); font-family: monospace;">${b.isbn}</td>
+            <td><span class="badge badge-gold"><span class="cat-dot" style="background: ${color};"></span>${b.category}</span></td>
+            <td>
+                <span style="font-weight: 600;">${b.availableStock}</span>
+                <span style="color: var(--fg-muted);">/ ${b.stock}</span>
+            </td>
+            <td>${statusBadge}</td>
+            <td style="text-align: right;">
+                <button class="btn btn-secondary btn-sm" onclick="editBook('${b.id}')" title="Edit"><i class="fas fa-pen"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="confirmDeleteBook('${b.id}')" title="Hapus" style="margin-left: 4px;"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>
+        `;
+    }).join('');
+}
+
+function openBookModal(book = null) {
+    document.getElementById('bookModalTitle').textContent = book ? 'Edit Buku' : 'Tambah Buku Baru';
+    document.getElementById('bookEditId').value = book ? book.id : '';
+    document.getElementById('bookTitle').value = book ? book.title : '';
+    document.getElementById('bookAuthor').value = book ? book.author : '';
+    document.getElementById('bookISBN').value = book ? book.isbn : '';
+    document.getElementById('bookPublisher').value = book ? book.publisher : '';
+    document.getElementById('bookCategory').value = book ? book.category : 'Fiksi';
+    document.getElementById('bookStock').value = book ? book.stock : 1;
+    document.getElementById('bookYear').value = book ? book.year : new Date().getFullYear();
+    openModal('bookModal');
+}
+
+function saveBook() {
+    const editId = document.getElementById('bookEditId').value;
+    const title = document.getElementById('bookTitle').value.trim();
+    const author = document.getElementById('bookAuthor').value.trim();
+    const isbn = document.getElementById('bookISBN').value.trim();
+    const publisher = document.getElementById('bookPublisher').value.trim();
+    const category = document.getElementById('bookCategory').value;
+    const stock = parseInt(document.getElementById('bookStock').value) || 0;
+    const year = parseInt(document.getElementById('bookYear').value) || 2024;
+
+    // Validasi
+    if (!title) { showToast('Judul buku wajib diisi', 'error'); return; }
+    if (!author) { showToast('Pengarang wajib diisi', 'error'); return; }
+    if (!isbn) { showToast('ISBN wajib diisi', 'error'); return; }
+
+    let books = getDB(DB_KEYS.books);
+
+    if (editId) {
+        // Edit
+        const idx = books.findIndex(b => b.id === editId);
+        if (idx >= 0) {
+            const oldStock = books[idx].stock;
+            const oldAvailable = books[idx].availableStock;
+            const diff = stock - oldStock;
+            books[idx] = { ...books[idx], title, author, isbn, publisher, category, stock, year, availableStock: Math.max(0, oldAvailable + diff) };
+        }
+        showToast('Buku berhasil diperbarui', 'success');
+    } else {
+        // Tambah
+        books.push({
+            id: generateId('B'),
+            title, author, isbn, publisher, category, stock,
+            availableStock: stock,
+            year,
+            createdAt: new Date().toISOString().split('T')[0]
+        });
+        showToast('Buku berhasil ditambahkan', 'success');
+    }
+
+    setDB(DB_KEYS.books, books);
+    closeModal('bookModal');
+    renderBooks();
+}
+
+function editBook(id) {
+    const book = getDB(DB_KEYS.books).find(b => b.id === id);
+    if (book) openBookModal(book);
+}
+
+function confirmDeleteBook(id) {
+    const book = getDB(DB_KEYS.books).find(b => b.id === id);
+    document.getElementById('confirmTitle').textContent = 'Hapus Buku';
+    document.getElementById('confirmMsg').textContent = `Apakah Anda yakin ingin menghapus "${book ? book.title : ''}"? Tindakan ini tidak dapat dibatalkan.`;
+    document.getElementById('confirmBtn').onclick = () => {
+        deleteBook(id);
+        closeModal('confirmModal');
+    };
+    openModal('confirmModal');
+}
+
+function deleteBook(id) {
+    let books = getDB(DB_KEYS.books).filter(b => b.id !== id);
+setDB(DB_KEYS.books, books);
+    showToast('Buku berhasil dihapus', 'success');
+    renderBooks();
+}
+
+// ============================================================
+// ANGGOTA
+// ============================================================
+function renderMembers() {
+    const members = getDB(DB_KEYS.members);
+    const search = (document.getElementById('searchMembers')?.value || '').toLowerCase();
+
+    let filtered = members.filter(m =>
+        !search || m.name.toLowerCase().includes(search) || m.email.toLowerCase().includes(search) || m.id.toLowerCase().includes(search)
+    );
+
+    const tbody = document.getElementById('membersBody');
+    const empty = document.getElementById('membersEmpty');
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+    }
+    empty.style.display = 'none';
+
+    // Hitung jumlah pinjaman aktif per anggota
+    const borrows = getDB(DB_KEYS.borrows).filter(b => b.status === 'aktif');
+
+    tbody.innerHTML = filtered.map(m => {
+        const activeBorrows = borrows.filter(b => b.memberId === m.id).length;
+        const statusBadge = m.status === 'aktif'
+            ? `<span class="badge badge-success"><i class="fas fa-circle" style="font-size: 6px;"></i> Aktif</span>`
+            : `<span class="badge badge-danger"><i class="fas fa-circle" style="font-size: 6px;"></i> Nonaktif</span>`;
+        const initials = m.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+
+        return `
+        <tr>
+            <td>
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #8B6914); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: #0F1A14; flex-shrink: 0;">${initials}</div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 13px;">${m.name}</div>
+                        <div style="font-size: 11px; color: var(--fg-muted);">${m.email}</div>
+                    </div>
+                </div>
+            </td>
+            <td style="font-family: monospace; font-size: 13px; color: var(--accent);">${m.id}</td>
+            <td style="font-size: 13px;">${m.phone}</td>
+            <td style="font-size: 12px; color: var(--fg-muted);">${formatDate(m.createdAt)}</td>
+            <td>
+                ${statusBadge}
+                ${activeBorrows > 0 ? `<span class="badge badge-info" style="margin-left: 4px;">${activeBorrows} pinjam</span>` : ''}
+            </td>
+            <td style="text-align: right;">
+                <button class="btn btn-secondary btn-sm" onclick="editMember('${m.id}')" title="Edit"><i class="fas fa-pen"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="confirmDeleteMember('${m.id}')" title="Hapus" style="margin-left: 4px;"><i class="fas fa-trash"></i></button>
+            </td>
+        </tr>
+        `;
+    }).join('');
+}
+
+function openMemberModal(member = null) {
+    document.getElementById('memberModalTitle').textContent = member ? 'Edit Anggota' : 'Tambah Anggota Baru';
+    document.getElementById('memberEditId').value = member ? member.id : '';
+    document.getElementById('memberName').value = member ? member.name : '';
+    document.getElementById('memberEmail').value = member ? member.email : '';
+    document.getElementById('memberPhone').value = member ? member.phone : '';
+    document.getElementById('memberAddress').value = member ? member.address : '';
+    openModal('memberModal');
+}
+
+function saveMember() {
+    const editId = document.getElementById('memberEditId').value;
+    const name = document.getElementById('memberName').value.trim();
+    const email = document.getElementById('memberEmail').value.trim();
+    const phone = document.getElementById('memberPhone').value.trim();
+    const address = document.getElementById('memberAddress').value.trim();
+
+    if (!name) { showToast('Nama wajib diisi', 'error'); return; }
+    if (!email) { showToast('Email wajib diisi', 'error'); return; }
+    if (!phone) { showToast('Telepon wajib diisi', 'error'); return; }
+
+    let members = getDB(DB_KEYS.members);
+
+    if (editId) {
+        const idx = members.findIndex(m => m.id === editId);
+        if (idx >= 0) {
+            members[idx] = { ...members[idx], name, email, phone, address };
+        }
+        showToast('Data anggota berhasil diperbarui', 'success');
+    } else {
+        members.push({
+            id: generateId('M'),
+            name, email, phone, address,
+            status: 'aktif',
+            createdAt: new Date().toISOString().split('T')[0]
+        });
+        showToast('Anggota berhasil ditambahkan', 'success');
+    }
+
+    setDB(DB_KEYS.members, members);
+    closeModal('memberModal');
+    renderMembers();
+}
+
+function editMember(id) {
+    const member = getDB(DB_KEYS.members).find(m => m.id === id);
+    if (member) openMemberModal(member);
+}
+
+function confirmDeleteMember(id) {
+    const member = getDB(DB_KEYS.members).find(m => m.id === id);
+    document.getElementById('confirmTitle').textContent = 'Hapus Anggota';
+    document.getElementById('confirmMsg').textContent = `Apakah Anda yakin ingin menghapus anggota "${member ? member.name : ''}"?`;
+    document.getElementById('confirmBtn').onclick = () => {
+        deleteMember(id);
+        closeModal('confirmModal');
+    };
+    openModal('confirmModal');
+}
+
+function deleteMember(id) {
+    let members = getDB(DB_KEYS.members).filter(m => m.id !== id);
+    setDB(DB_KEYS.members, members);
+    showToast('Anggota berhasil dihapus', 'success');
+    renderMembers();
+}
+
+// ============================================================
+// PEMINJAMAN
+// ============================================================
+function renderBorrowPage() {
+    const members = getDB(DB_KEYS.members).filter(m => m.status === 'aktif');
+    const books = getDB(DB_KEYS.books).filter(b => b.availableStock > 0);
+    const today = new Date().toISOString().split('T')[0];
+
+    // Isi dropdown anggota
+    const memberSelect = document.getElementById('borrowMember');
+    const currentMember = memberSelect.value;
+    memberSelect.innerHTML = '<option value="">-- Pilih Anggota --</option>' + members.map(m => `<option value="${m.id}" ${m.id === currentMember ? 'selected' : ''}>${m.id} - ${m.name}</option>`).join('');
+
+    // Isi dropdown buku
+    const bookSelect = document.getElementById('borrowBook');
+    const currentBook = bookSelect.value;
+    bookSelect.innerHTML = '<option value="">-- Pilih Buku --</option>' + books.map(b => `<option value="${b.id}" ${b.id === currentBook ? 'selected' : ''}>${b.id} - ${b.title} (sisa ${b.availableStock})</option>`).join('');
+
+    // Set tanggal default
+    const dateInput = document.getElementById('borrowDate');
+    if (!dateInput.value) dateInput.value = today;
+    updateDueDate();
+
+    // Tabel peminjaman aktif
+    const borrows = getDB(DB_KEYS.borrows).filter(b => b.status === 'aktif');
+    const allBooks = getDB(DB_KEYS.books);
+    const allMembers = getDB(DB_KEYS.members);
+
+    const tbody = document.getElementById('borrowBody');
+    const empty = document.getElementById('borrowEmpty');
+
+    if (borrows.length === 0) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+    }
+    empty.style.display = 'none';
+
+    tbody.innerHTML = borrows.sort((a, b) => new Date(b.borrowDate) - new Date(a.borrowDate)).map(b => {
+        const member = allMembers.find(m => m.id === b.memberId);
+        const book = allBooks.find(bk => bk.id === b.bookId);
+        const isOverdue = b.dueDate < today;
+        const statusBadge = isOverdue
+            ? `<span class="badge badge-danger"><i class="fas fa-clock" style="font-size: 8px;"></i> Terlambat ${daysBetween(b.dueDate, today)} hari</span>`
+            : `<span class="badge badge-info"><i class="fas fa-clock" style="font-size: 8px;"></i> ${daysBetween(today, b.dueDate)} hari lagi</span>`;
+
+        return `
+        <tr>
+            <td style="font-family: monospace; font-size: 13px; color: var(--accent);">${b.id}</td>
+            <td style="font-size: 13px;">${member ? member.name : '-'}</td>
+            <td style="font-size: 13px;">${book ? book.title : '-'}</td>
+            <td style="font-size: 12px;">${formatDate(b.borrowDate)}</td>
+            <td style="font-size: 12px;">${formatDate(b.dueDate)}</td>
+            <td>${statusBadge}</td>
+        </tr>
+        `;
+    }).join('');
+}
+
+function updateDueDate() {
+    const borrowDate = document.getElementById('borrowDate').value;
+    if (borrowDate) {
+        const due = new Date(borrowDate);
+        due.setDate(due.getDate() + 14);
+        document.getElementById('borrowDue').value = due.toISOString().split('T')[0];
+    }
+}
+// Event listener untuk tanggal pinjam
+document.getElementById('borrowDate')?.addEventListener('change', updateDueDate);
+
+function processBorrow() {
+    const memberId = document.getElementById('borrowMember').value;
+    const bookId = document.getElementById('borrowBook').value;
+    const borrowDate = document.getElementById('borrowDate').value;
+    const dueDate = document.getElementById('borrowDue').value;
+
+    if (!memberId) { showToast('Pilih anggota terlebih dahulu', 'error'); return; }
+    if (!bookId) { showToast('Pilih buku terlebih dahulu', 'error'); return; }
+    if (!borrowDate) { showToast('Tanggal pinjam wajib diisi', 'error'); return; }
+
+    // Cek apakah anggota sudah meminjam terlalu banyak (max 3)
+    const borrows = getDB(DB_KEYS.borrows);
+    const activeBorrows = borrows.filter(b => b.status === 'aktif' && b.memberId === memberId);
+    if (activeBorrows.length >= 3) {
+        showToast('Anggota sudah meminjam 3 buku (batas maksimum)', 'warning');
+        return;
+    }
+
+    // Cek apakah buku yang sama sudah dipinjam anggota ini
+    if (activeBorrows.find(b => b.bookId === bookId)) {
+        showToast('Anggota sudah meminjam buku ini', 'warning');
+        return;
+    }
+
+    // Kurangi stok tersedia
+    let books = getDB(DB_KEYS.books);
+    const bookIdx = books.findIndex(b => b.id === bookId);
+    if (bookIdx < 0 || books[bookIdx].availableStock <= 0) {
+        showToast('Stok buku tidak tersedia', 'error');
+        return;
+    }
+    books[bookIdx].availableStock--;
+    setDB(DB_KEYS.books, books);
+
+    // Buat record peminjaman
+    const newBorrow = {
+        id: generateId('P'),
+        memberId, bookId, borrowDate, dueDate,
+        status: 'aktif',
+        createdAt: new Date().toISOString().split('T')[0]
+    };
+    borrows.push(newBorrow);
+    setDB(DB_KEYS.borrows, borrows);
+
+    const member = getDB(DB_KEYS.members).find(m => m.id === memberId);
+    const book = getDB(DB_KEYS.books).find(b => b.id === bookId);
+    showToast(`Peminjaman berhasil: "${book ? book.title : ''}" untuk ${member ? member.name : ''}`, 'success');
+
+    // Reset form
+    document.getElementById('borrowMember').value = '';
+    document.getElementById('borrowBook').value = '';
+
+    renderBorrowPage();
+}
+
+// ============================================================
+// PENGEMBALIAN
+// ============================================================
+function renderReturns() {
+    const borrows = getDB(DB_KEYS.borrows).filter(b => b.status === 'aktif');
+    const books = getDB(DB_KEYS.books);
+    const members = getDB(DB_KEYS.members);
+    const returns = getDB(DB_KEYS.returns);
+    const today = new Date().toISOString().split('T')[0];
+    const search = (document.getElementById('searchReturns')?.value || '').toLowerCase();
+
+    let filtered = borrows.filter(b => {
+        const member = members.find(m => m.id === b.memberId);
+        const book = books.find(bk => bk.id === b.bookId);
+        const matchSearch = !search || (member && member.name.toLowerCase().includes(search)) || (book && book.title.toLowerCase().includes(search)) || b.id.toLowerCase().includes(search);
+        return matchSearch;
+    });
+
+    const tbody = document.getElementById('returnsBody');
+    const empty = document.getElementById('returnsEmpty');
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        empty.style.display = 'block';
+    } else {
+        empty.style.display = 'none';
+        tbody.innerHTML = filtered.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)).map(b => {
+            const member = members.find(m => m.id === b.memberId);
+            const book = books.find(bk => bk.id === b.bookId);
+            const daysLate = Math.max(0, daysBetween(b.dueDate, today));
+            const fine = daysLate * 1000; // Denda Rp 1000/hari
+            const isOverdue = daysLate > 0;
+
+            return `
+            <tr>
+                <td style="font-family: monospace; font-size: 13px; color: var(--accent);">${b.id}</td>
+                <td style="font-size: 13px;">${member ? member.name : '-'}</td>
+                <td style="font-size: 13px;">${book ? book.title : '-'}</td>
+                <td style="font-size: 12px;">${formatDate(b.dueDate)}</td>
+                <td>${isOverdue ? `<span class="badge badge-danger">${daysLate} hari</span>` : `<span class="badge badge-success">Tepat waktu</span>`}</td>
+                <td style="font-weight: 600; color: ${fine > 0 ? 'var(--danger)' : 'var(--success)'};">${fine > 0 ? formatRupiah(fine) : '-'}</td>
+                <td style="text-align: center;">
+                    <button class="btn btn-success btn-sm" onclick="processReturn('${b.id}')">
+                        <i class="fas fa-rotate-left"></i> Kembalikan
+                    </button>
+                </td>
+            </tr>
+            `;
+        }).join('');
+    }
+
+    // Riwayat pengembalian
+    const historyBody = document.getElementById('returnHistoryBody');
+    const historyEmpty = document.getElementById('returnHistoryEmpty');
+
+    if (returns.length === 0) {
+        historyBody.innerHTML = '';
+        historyEmpty.style.display = 'block';
+    } else {
+        historyEmpty.style.display = 'none';
+        historyBody.innerHTML = returns.sort((a, b) => new Date(b.returnDate) - new Date(a.returnDate)).map(r => {
+            const member = members.find(m => m.id === r.memberId);
+            const book = books.find(bk => bk.id === r.bookId);
+            return `
+            <tr>
+                <td style="font-size: 13px;">${member ? member.name : '-'}</td>
+                <td style="font-size: 13px;">${book ? book.title : '-'}</td>
+                <td style="font-size: 12px;">${formatDate(r.returnDate)}</td>
+                <td style="font-weight: 600; color: ${r.fine > 0 ? 'var(--danger)' : 'var(--success)'};">${r.fine > 0 ? formatRupiah(r.fine) : 'Rp 0'}</td>
+            </tr>
+            `;
+        }).join('');
+    }
+}
+
+function processReturn(borrowId) {
+    const borrows = getDB(DB_KEYS.borrows);
+    const borrowIdx = borrows.findIndex(b => b.id === borrowId);
+    if (borrowIdx < 0) return;
+
+    const borrow = borrows[borrowIdx];
+    const today = new Date().toISOString().split('T')[0];
+    const daysLate = Math.max(0, daysBetween(borrow.dueDate, today));
+    const fine = daysLate * 1000;
+
+    // Update status peminjaman
+    borrows[borrowIdx].status = 'dikembalikan';
+    setDB(DB_KEYS.borrows, borrows);
+
+    // Tambah stok buku
+    let books = getDB(DB_KEYS.books);
+    const bookIdx = books.findIndex(b => b.id === borrow.bookId);
+    if (bookIdx >= 0) {
+        books[bookIdx].availableStock = Math.min(books[bookIdx].stock, books[bookIdx].availableStock + 1);
+        setDB(DB_KEYS.books, books);
+    }
+
+    // Simpan record pengembalian
+    let returns = getDB(DB_KEYS.returns);
+    returns.push({
+        borrowId: borrow.id,
+        memberId: borrow.memberId,
+        bookId: borrow.bookId,
+        returnDate: today,
+        fine,
+        createdAt: today
+    });
+    setDB(DB_KEYS.returns, returns);
+
+    const book = books.find(b => b.id === borrow.bookId);
+    if (fine > 0) {
+        showToast(`Buku "${book ? book.title : ''}" dikembalikan. Denda: ${formatRupiah(fine)} (${daysLate} hari terlambat)`, 'warning');
+    } else {
+        showToast(`Buku "${book ? book.title : ''}" berhasil dikembalikan`, 'success');
+    }
+
+    renderReturns();
+}
+
+// ============================================================
+// LAPORAN
+// ============================================================
+function renderReports() {
+    const borrows = getDB(DB_KEYS.borrows);
+    const returns = getDB(DB_KEYS.returns);
+    const books = getDB(DB_KEYS.books);
+    const members = getDB(DB_KEYS.members);
+
+    const totalBorrows = borrows.length;
+    const totalReturns = returns.length;
+    const totalFines = returns.reduce((sum, r) => sum + (r.fine || 0), 0);
+
+    document.getElementById('reportTotalBorrows').textContent = totalBorrows;
+    document.getElementById('reportTotalReturns').textContent = totalReturns;
+    document.getElementById('reportTotalFines').textContent = formatRupiah(totalFines);
+
+    // Buku paling banyak dipinjam
+    const bookBorrowCount = {};
+    borrows.forEach(b => { bookBorrowCount[b.bookId] = (bookBorrowCount[b.bookId] || 0) + 1; });
+    const topBooks = Object.entries(bookBorrowCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([id, count]) => ({ book: books.find(b => b.id === id), count }))
+        .filter(x => x.book);
+
+    const maxBorrowCount = topBooks.length > 0 ? topBooks[0].count : 1;
+
+    document.getElementById('topBooksList').innerHTML = topBooks.length === 0
+        ? '<p style="color: var(--fg-muted); font-size: 13px;">Belum ada data</p>'
+        : topBooks.map((item, i) => `
+            <div style="display: flex; align-items: center; gap: 14px; padding: 12px 0; ${i < topBooks.length - 1 ? 'border-bottom: 1px solid var(--border);' : ''}">
+                <div style="width: 28px; height: 28px; border-radius: 8px; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--accent); flex-shrink: 0;">${i + 1}</div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.book.title}</div>
+                    <div style="font-size: 11px; color: var(--fg-muted);">${item.book.author}</div>
+                    <div style="margin-top: 6px; height: 4px; border-radius: 2px; background: var(--bg); overflow: hidden;">
+                        <div style="height: 100%; width: ${(item.count / maxBorrowCount) * 100}%; background: var(--accent); border-radius: 2px; transition: width 0.5s ease;"></div>
+                    </div>
+                </div>
+                <div style="text-align: right; flex-shrink: 0;">
+                    <div style="font-size: 18px; font-weight: 700; color: var(--accent);">${item.count}</div>
+                    <div style="font-size: 10px; color: var(--fg-muted);">kali dipinjam</div>
+                </div>
+            </div>
+        `).join('');
+
+    // Anggota paling aktif
+    const memberBorrowCount = {};
+    borrows.forEach(b => { memberBorrowCount[b.memberId] = (memberBorrowCount[b.memberId] || 0) + 1; });
+    const topMembers = Object.entries(memberBorrowCount)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([id, count]) => ({ member: members.find(m => m.id === id), count }))
+        .filter(x => x.member);
+
+    const maxMemberCount = topMembers.length > 0 ? topMembers[0].count : 1;
+
+    document.getElementById('topMembersList').innerHTML = topMembers.length === 0
+        ? '<p style="color: var(--fg-muted); font-size: 13px;">Belum ada data</p>'
+        : topMembers.map((item, i) => {
+            const initials = item.member.name.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+            return `
+            <div style="display: flex; align-items: center; gap: 14px; padding: 12px 0; ${i < topMembers.length - 1 ? 'border-bottom: 1px solid var(--border);' : ''}">
+                <div style="width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #8B6914); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; color: #0F1A14; flex-shrink: 0;">${initials}</div>
+                <div style="flex: 1; min-width: 0;">
+                    <div style="font-size: 13px; font-weight: 600;">${item.member.name}</div>
+                    <div style="font-size: 11px; color: var(--fg-muted);">${item.member.id} &middot; ${item.member.email}</div>
+                    <div style="margin-top: 6px; height: 4px; border-radius: 2px; background: var(--bg); overflow: hidden;">
+                        <div style="height: 100%; width: ${(item.count / maxMemberCount) * 100}%; background: var(--success); border-radius: 2px; transition: width 0.5s ease;"></div>
+                    </div>
+                </div>
+                <div style="text-align: right; flex-shrink: 0;">
+                    <div style="font-size: 18px; font-weight: 700; color: var(--success);">${item.count}</div>
+                    <div style="font-size: 10px; color: var(--fg-muted);">peminjaman</div>
+                </div>
+            </div>
+            `;
+        }).join('');
+}
+
+// ============================================================
+// PENCARIAN GLOBAL
+// ============================================================
+function handleGlobalSearch(query) {
+    if (!query.trim()) return;
+    const q = query.toLowerCase();
+
+    const books = getDB(DB_KEYS.books);
+    const members = getDB(DB_KEYS.members);
+
+    const bookMatch = books.find(b => b.title.toLowerCase().includes(q) || b.author.toLowerCase().includes(q));
+    const memberMatch = members.find(m => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q));
+
+    if (bookMatch) {
+        navigateTo('books');
+        document.getElementById('searchBooks').value = query;
+        renderBooks();
+    } else if (memberMatch) {
+        navigateTo('members');
+        document.getElementById('searchMembers').value = query;
+        renderMembers();
+    }
+}
+
+// ============================================================
+// PARTIKEL LATAR BELAKANG
+// ============================================================
+function createParticles() {
+    const colors = ['#D4A843', '#4ADE80', '#2E4A38'];
+    for (let i = 0; i < 12; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        const size = Math.random() * 4 + 2;
+        particle.style.cssText = `
+            width: ${size}px; height: ${size}px;
+            left: ${Math.random() * 100}%;
+            background: ${colors[Math.floor(Math.random() * colors.length)]};
+            animation-duration: ${Math.random() * 20 + 15}s;
+            animation-delay: ${Math.random() * 10}s;
+        `;
+        document.body.appendChild(particle);
+    }
+}
+
+// ============================================================
+// MOBILE SIDEBAR TOGGLE
+// ============================================================
+document.getElementById('mobileToggle').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.toggle('open');
+});
+
+// Tutup sidebar saat klik di luar pada mobile
+document.getElementById('mainContent').addEventListener('click', () => {
+    document.getElementById('sidebar').classList.remove('open');
+});
+
+// Tutup modal saat klik overlay
+document.querySelectorAll('.modal-overlay').forEach(modal => {
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal(modal.id);
+    });
+});
+
+// ============================================================
+// TANGGAL SEKARANG
+// ============================================================
+function updateDate() {
+    const now = new Date();
+    document.getElementById('currentDate').textContent = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+// ============================================================
+// INISIALISASI
+// ============================================================
+function init() {
+    initDB();
+    updateDate();
+    createParticles();
+    renderDashboard();
+}
+
+// Jalankan saat halaman siap
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>
